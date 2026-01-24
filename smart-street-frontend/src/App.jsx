@@ -11,12 +11,15 @@ import LandingPage from "./pages/LandingPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 
+import OfflineBanner from "./components/OfflineBanner.jsx";
+
 // Unused HomeRedirect for now, but keeping if logic is needed later logic
 // const HomeRedirect = ...
 
 export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <OfflineBanner />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/public" element={<PublicMap />} />

@@ -192,6 +192,11 @@ const listVendors = async () => {
   return { vendors };
 };
 
+const listOwners = async () => {
+  const owners = await adminRepository.listOwners();
+  return { owners };
+};
+
 module.exports = {
   listPendingRequests,
   listHistoryRequests,
@@ -201,6 +206,7 @@ module.exports = {
   listPermits,
   listAuditLogs,
   getDashboardStats,
-  listVendors
+  listVendors,
+  listOwners
 };
 

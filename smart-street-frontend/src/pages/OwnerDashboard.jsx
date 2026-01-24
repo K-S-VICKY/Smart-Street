@@ -11,7 +11,7 @@ import MapSearchControl from "../components/MapSearchControl.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import OwnerSidebar from "../components/OwnerSidebar.jsx";
 
-const defaultCenter = [12.9716, 77.5946];
+const defaultCenter = [11.3410, 77.7172];
 
 const MapClickCatcher = ({ onClick }) => {
   useMapEvents({

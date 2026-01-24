@@ -5,7 +5,7 @@ import MapSearchControl from "./MapSearchControl.jsx";
 import MapZoomLocationControls from "./MapZoomLocationControls.jsx";
 import "leaflet/dist/leaflet.css";
 
-const defaultCenter = [12.9716, 77.5946];
+const defaultCenter = [11.3410, 77.7172];
 
 const MapEventListener = () => {
   const map = useMap();

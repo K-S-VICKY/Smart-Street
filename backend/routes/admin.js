@@ -32,6 +32,7 @@ router.get("/permits", adminController.listPermits);
 router.get("/audit-logs", adminController.listAuditLogs);
 router.get("/stats", adminController.getStats);
 router.get("/vendors", adminController.listVendors);
+router.get("/owners", adminController.listOwners);
 
 module.exports = router;
 

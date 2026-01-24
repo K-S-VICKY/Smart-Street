@@ -5,15 +5,29 @@ export default function VoiceAssistant({ onCommand, isListening, setIsListening,
   const [transcript, setTranscript] = useState("");
   const [manualInput, setManualInput] = useState("");
   const [supported, setSupported] = useState(true);
+  const [isBrave, setIsBrave] = useState(false);
 
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       setSupported(false);
     }
+    
+    // Check for Brave browser
+    if (navigator.brave && navigator.brave.isBrave) {
+      navigator.brave.isBrave().then(isBrave => {
+        if (isBrave) setIsBrave(true);
+      });
+    }
   }, []);
 
   useEffect(() => {
     if (!supported || !isListening) return;
+
+    if (isBrave) {
+      setTranscript("Brave browser is not compatible. Please use Chrome.");
+      const timer = setTimeout(() => setIsListening(false), 3000);
+      return () => clearTimeout(timer);
+    }
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();

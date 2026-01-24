@@ -8,7 +8,7 @@ import MapSearchControl from "../components/MapSearchControl.jsx";
 import PublicSidebar from "../components/PublicSidebar.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 
-const defaultCenter = [12.9716, 77.5946];
+const defaultCenter = [11.3410, 77.7172];
 
 const radiusFromDims = (maxWidth, maxLength) => {
   return Math.sqrt(maxWidth ** 2 + maxLength ** 2) / 2;

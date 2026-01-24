@@ -84,6 +84,15 @@ const listVendors = async (req, res, next) => {
   }
 };
 
+const listOwners = async (req, res, next) => {
+  try {
+    const result = await adminService.listOwners();
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   listRequests,
   approve,
@@ -92,6 +101,7 @@ module.exports = {
   listPermits,
   listAuditLogs,
   getStats,
-  listVendors
+  listVendors,
+  listOwners
 };
 

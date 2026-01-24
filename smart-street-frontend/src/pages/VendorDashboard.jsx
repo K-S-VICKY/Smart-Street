@@ -16,7 +16,7 @@ import VoiceAssistant from "../components/VoiceAssistant.jsx";
 import { parseBookingIntent } from "../utils/voiceUtils.js";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 
-const defaultCenter = [12.9716, 77.5946];
+const defaultCenter = [11.3410, 77.7172];
 
 // Simple Haversine distance helper (meters)
 const getDistanceMeters = (lat1, lng1, lat2, lng2) => {
@@ -136,6 +136,8 @@ export default function VendorDashboard() {
   const [isListening, setIsListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState(""); // "Processing...", "Locating...", etc.
   const [mapSearchQuery, setMapSearchQuery] = useState("");
+
+
 
   const handleVoiceCommand = (transcript) => {
     // If user closed manually (null transcript), clear status
@@ -441,6 +443,8 @@ export default function VendorDashboard() {
           </div>
         </div>
       </header>
+
+
 
       <main className="flex-1 relative min-h-0">
         {/* MAP-FIRST LAYOUT */}

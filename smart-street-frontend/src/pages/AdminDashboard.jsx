@@ -14,11 +14,12 @@ import AdminSidebar from "../components/AdminSidebar.jsx";
 import AdminRequestDetail from "../components/AdminRequestDetail.jsx";
 import AdminStatsCards from "../components/AdminStatsCards.jsx";
 import AdminVendorList from "../components/AdminVendorList.jsx";
+import AdminOwnerList from "../components/AdminOwnerList.jsx";
 import { ChartBarSquareIcon, MapIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 
 import ThemeToggle from "../components/ThemeToggle.jsx";
 
-const defaultCenter = [12.9716, 77.5946];
+const defaultCenter = [11.3410, 77.7172];
 
 const radiusFromDims = (maxWidth, maxLength) => {
   return Math.sqrt(maxWidth ** 2 + maxLength ** 2) / 2;
@@ -47,18 +48,21 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview"); // overview, map, vendors
   const [stats, setStats] = useState(null);
   const [vendors, setVendors] = useState([]);
+  const [owners, setOwners] = useState([]);
   const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
       setStatsLoading(true);
       try {
-        const [statsRes, vendorsRes] = await Promise.all([
+        const [statsRes, vendorsRes, ownersRes] = await Promise.all([
           api.get("/admin/stats"),
-          api.get("/admin/vendors")
+          api.get("/admin/vendors"),
+          api.get("/admin/owners")
         ]);
         setStats(statsRes.data.stats || statsRes.data);
         setVendors(vendorsRes.data.vendors || []);
+        setOwners(ownersRes.data.owners || []);
       } catch (err) {
         console.error("Failed to load stats", err);
       } finally {
@@ -227,6 +231,15 @@ export default function AdminDashboard() {
                <UserGroupIcon className="w-4 h-4" />
                Vendors
              </button>
+             <button
+               onClick={() => setActiveTab("owners")}
+               className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                 activeTab === "owners" ? "bg-white dark:bg-slate-800 shadow text-blue-600 dark:text-blue-400" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+               }`}
+             >
+               <UserGroupIcon className="w-4 h-4" />
+               Owners
+             </button>
           </div>
         </div>
       </header>
@@ -277,6 +290,12 @@ export default function AdminDashboard() {
         {activeTab === "vendors" && (
            <div className="h-full overflow-hidden p-4 md:p-6 max-w-7xl mx-auto w-full">
               <AdminVendorList vendors={vendors} loading={statsLoading} />
+           </div>
+        )}
+
+        {activeTab === "owners" && (
+           <div className="h-full overflow-hidden p-4 md:p-6 max-w-7xl mx-auto w-full">
+              <AdminOwnerList owners={owners} loading={statsLoading} />
            </div>
         )}
 

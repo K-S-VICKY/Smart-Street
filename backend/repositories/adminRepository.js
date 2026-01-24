@@ -313,6 +313,24 @@ const listVendors = async () => {
   return result.rows;
 };
 
+const listOwners = async () => {
+  const result = await db.query(`
+    SELECT 
+      o.owner_id,
+      o.owner_name,
+      o.contact_info,
+      u.email,
+      u.phone AS phone_number,
+      u.name AS user_name,
+      o.created_at,
+      (SELECT COUNT(*) FROM spaces s WHERE s.owner_id = o.owner_id) AS total_spaces
+    FROM owners o
+    JOIN users u ON u.user_id = o.user_id
+    ORDER BY o.created_at DESC
+  `);
+  return result.rows;
+};
+
 module.exports = {
   listPendingRequests,
   listAllRequests,
@@ -324,5 +342,6 @@ module.exports = {
   listPermits,
   getVendorUserId,
   getDashboardStats,
-  listVendors
+  listVendors,
+  listOwners
 };
