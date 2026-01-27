@@ -44,6 +44,15 @@ exports.handleChat = async (req, res) => {
 
   } catch (error) {
     console.error("Chat Controller Error:", error);
+    
+    if (error.status) {
+       return res.status(error.status).json({ 
+         error: error.message || "AI Service Error",
+         type: "text",
+         content: error.message || "I'm experiencing high traffic. Please try again in a moment."
+       });
+    }
+
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
