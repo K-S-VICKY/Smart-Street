@@ -15,21 +15,31 @@ const getCongestionData = async ({ bounds, zoom }) => {
 
 const verifyPermit = async qrCodeData => {
   if (!qrCodeData) {
-    const err = new Error("QR code data is required");
+    const err = new Error("Data is required");
     err.status = 400;
     throw err;
   }
 
-  let decoded;
-  try {
-    decoded = jwt.verify(qrCodeData, process.env.JWT_SECRET);
-  } catch (err) {
-    const error = new Error("Invalid QR code signature");
-    error.status = 401;
-    throw error;
+  let decoded = null;
+  let permit = null;
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(qrCodeData);
+
+  if (isUUID) {
+      // It's a Permit ID
+      permit = await publicRepository.findPermitById(qrCodeData);
+  } else {
+      // It's likely a JWT
+      try {
+        decoded = jwt.verify(qrCodeData, process.env.JWT_SECRET);
+        permit = await publicRepository.findPermitByQrData(qrCodeData);
+      } catch (err) {
+        // If not UUID and not valid JWT, throw 401
+        const error = new Error("Invalid QR code signature or ID format");
+        error.status = 401;
+        throw error;
+      }
   }
 
-  const permit = await publicRepository.findPermitByQrData(qrCodeData);
   if (!permit) {
     const err = new Error("Permit not found");
     err.status = 404;
@@ -62,7 +72,8 @@ const verifyPermit = async qrCodeData => {
       validFrom: permit.valid_from,
       validTo: permit.valid_to,
       permitStatus: permit.permit_status,
-      issuedAt: permit.issued_at
+      issuedAt: permit.issued_at,
+      transactionHash: permit.transaction_hash // Expose to Frontend
     },
     checks,
     decoded

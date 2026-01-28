@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS permits (
   valid_from TIMESTAMPTZ NOT NULL,
   valid_to TIMESTAMPTZ NOT NULL,
   issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  transaction_hash TEXT, -- Blockchain transaction hash
   CONSTRAINT permits_validity CHECK (valid_from < valid_to)
 );
 

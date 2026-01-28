@@ -30,6 +30,8 @@ IMPORTANT RULES FOR SQL GENERATION:
 - Join tables correctly. 'vendors' links to 'users' via 'user_id'.
 - Do NOT generate DELETE, UPDATE, INSERT, or DROP statements. SELECT only.
 - If the user asks for "flowers", look in vendors.category or vendors.business_name.
+- **CRITICAL**: To show "View on Map" button, we need location. When querying 'vendors', ALWAYS JOIN with 'space_requests' AS sr ON vendors.vendor_id = sr.vendor_id WHERE sr.status = 'APPROVED'. Select 'ST_Y(sr.center::geometry) as lat' and 'ST_X(sr.center::geometry) as lng'.
+- **CRITICAL**: When querying 'spaces' or 'space_requests', ALWAYS use the alias (e.g. s.center or sr.center) for the center column. Select 'ST_Y(center::geometry) as lat' and 'ST_X(center::geometry) as lng'.
 `;
 
 const generateSQL = async (userQuery) => {

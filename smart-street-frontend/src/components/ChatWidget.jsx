@@ -142,18 +142,25 @@ const ChatWidget = () => {
                             <h3 className="font-bold text-slate-800 dark:text-slate-200 text-xs">{item.business_name || item.space_name || "Unknown"}</h3>
                             <div className="flex justify-between items-center mt-1">
                                 <span className="text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full">{item.category || "Vendor"}</span>
-                                <div className="flex gap-2">
-                                  <button 
-                                    onClick={() => {
-                                      setIsOpen(false);
-                                      navigate("/public", { state: { focusVendor: item } });
-                                    }}
-                                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors"
-                                    title="View on Map"
-                                  >
-                                    <MapPinIcon className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-                                  </button>
-                                </div>
+                                  <div className="flex gap-2">
+                                    <button 
+                                      onClick={() => {
+                                        if (item.lat && item.lng) {
+                                          setIsOpen(false);
+                                          navigate("/public", { state: { focusVendor: item } });
+                                        }
+                                      }}
+                                      disabled={!item.lat || !item.lng}
+                                      className={`p-1 rounded-full transition-colors ${
+                                        item.lat && item.lng 
+                                          ? "hover:bg-slate-200 dark:hover:bg-slate-700 text-cyan-600 dark:text-cyan-400" 
+                                          : "opacity-30 cursor-not-allowed text-slate-400 dark:text-slate-600"
+                                      }`}
+                                      title={item.lat && item.lng ? "View on Map" : "No location available"}
+                                    >
+                                      <MapPinIcon className="w-4 h-4" />
+                                    </button>
+                                  </div>
                             </div>
                          </div>
                        ))}

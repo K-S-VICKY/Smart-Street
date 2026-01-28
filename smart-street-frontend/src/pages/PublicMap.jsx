@@ -172,12 +172,7 @@ export default function PublicMap() {
         {/* Header Controls (Moved inside MapContainer for context access) */}
         <div className="absolute top-4 right-4 z-[2000] flex flex-col-reverse sm:flex-row items-end sm:items-start gap-3 pointer-events-none max-w-[calc(100vw-3rem)]">
            <div className="flex items-center gap-3 pointer-events-auto shadow-sm rounded-xl overflow-hidden sm:overflow-visible sm:shadow-none bg-white/10 sm:bg-transparent p-1 sm:p-0 backdrop-blur-sm sm:backdrop-blur-none border sm:border-none border-white/20">
-             <Link
-               to="/verify"
-               className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 px-3 py-2 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm whitespace-nowrap"
-             >
-               {t('verify')}
-             </Link>
+
              <Link
                to="/login"
                className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 backdrop-blur-md px-3 py-2 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold text-white transition-all shadow-md shadow-cyan-600/20"

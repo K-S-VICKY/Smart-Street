@@ -157,6 +157,7 @@ const findPermitByQrData = async qrPayload => {
       p.valid_to,
       p.status AS permit_status,
       p.issued_at,
+      p.transaction_hash,
       sr.vendor_id,
       sr.space_id,
       sr.max_width,
@@ -179,10 +180,52 @@ const findPermitByQrData = async qrPayload => {
     JOIN space_requests sr ON sr.request_id = p.request_id
     JOIN vendors v ON v.vendor_id = sr.vendor_id
     JOIN users u ON u.user_id = v.user_id
-    JOIN spaces s ON s.space_id = sr.space_id
+    LEFT JOIN spaces s ON s.space_id = sr.space_id
     WHERE p.qr_payload = $1;
     `,
     [qrPayload]
+  );
+  return result.rows[0] || null;
+};
+
+const findPermitById = async permitId => {
+  const result = await db.query(
+    `
+    SELECT
+      p.permit_id,
+      p.request_id,
+      p.qr_payload,
+      p.valid_from,
+      p.valid_to,
+      p.status AS permit_status,
+      p.issued_at,
+      p.transaction_hash,
+      sr.vendor_id,
+      sr.space_id,
+      sr.max_width,
+      sr.max_length,
+      sr.start_time,
+      sr.end_time,
+      sr.status,
+      ST_Y(sr.center::geometry) AS lat,
+      ST_X(sr.center::geometry) AS lng,
+      v.business_name,
+      v.category,
+      v.license_number,
+      u.name AS vendor_name,
+      s.space_name,
+      s.address,
+      ST_Y(s.center::geometry) AS space_lat,
+      ST_X(s.center::geometry) AS space_lng,
+      s.allowed_radius
+    FROM permits p
+    JOIN space_requests sr ON sr.request_id = p.request_id
+    JOIN vendors v ON v.vendor_id = sr.vendor_id
+    JOIN users u ON u.user_id = v.user_id
+    LEFT JOIN spaces s ON s.space_id = sr.space_id
+    WHERE p.permit_id = $1;
+    `,
+    [permitId]
   );
   return result.rows[0] || null;
 };
@@ -191,5 +234,6 @@ module.exports = {
   listApprovedVendors,
   searchVendors,
   getVendorDensity,
-  findPermitByQrData
+  findPermitByQrData,
+  findPermitById
 };

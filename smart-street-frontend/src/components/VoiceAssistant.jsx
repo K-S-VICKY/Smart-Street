@@ -114,7 +114,9 @@ export default function VoiceAssistant({ onCommand, isListening, setIsListening,
       {/* Floating Action Button (FAB) */}
       <button
         onClick={() => setIsListening(true)}
-        className={`fixed bottom-8 right-24 z-[3000] w-14 h-14 flex items-center justify-center rounded-full shadow-xl transition-all hover:scale-110 active:scale-95 ${
+        className={`fixed z-[3000] w-14 h-14 flex items-center justify-center rounded-full shadow-xl transition-all hover:scale-110 active:scale-95
+          bottom-32 right-4 md:bottom-8 md:right-8
+        ${
           isListening 
             ? "bg-red-500 text-white animate-pulse" 
             : "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 hover:bg-slate-50 dark:hover:bg-slate-700"

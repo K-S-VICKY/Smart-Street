@@ -105,12 +105,35 @@ const approveRequest = async ({ adminUserId, requestId, remarks, ipAddress }) =>
     });
 
     // Send notifications
-    // Send notifications
     const vendorUserId = await adminRepository.getVendorUserId(updated.vendor_id);
     if (vendorUserId) {
       await notificationService.createRequestApprovedNotification(vendorUserId, updated.request_id);
       await notificationService.createPermitIssuedNotification(vendorUserId, updated.request_id, permit.permit_id);
     }
+
+    // --- BLOCKCHAIN INTEGRATION ---
+    // We do this asynchronously/after commit so we don't block the UI if blockchain is slow
+    // But for this demo, we'll await it to ensure we get the hash back immediately
+    try {
+       const blockchainService = require('./blockchainService');
+       // Unique data to hash: Permit ID + Valid From + Vendor ID
+       const uniqueString = `${permit.permit_id}-${permit.valid_from}-${updated.vendor_id}`;
+       const txHash = await blockchainService.recordPermitOnChain(uniqueString);
+       
+       if (txHash) {
+         // Update DB with the hash
+         await db.query(
+            `UPDATE permits SET transaction_hash = $1 WHERE permit_id = $2`,
+            [txHash, permit.permit_id]
+         );
+         permit.transaction_hash = txHash;
+       }
+    } catch (bcError) {
+        console.error("Blockchain recording failed but permit issued:", bcError);
+        // We do NOT rollback the permit.
+    }
+    // -----------------------------    
+
 
     return { request: updated, permit };
   } catch (err) {

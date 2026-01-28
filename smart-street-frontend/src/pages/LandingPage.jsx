@@ -24,7 +24,13 @@ export default function LandingPage() {
            <span className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">Smart Street</span>
         </div>
         
-        <div className="flex items-center gap-4">
+   <div className="flex items-center gap-4">
+           <Link
+             to="/verify"
+             className="hidden sm:inline-flex items-center px-4 py-2 rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all shadow-sm"
+           >
+             Verify Permit
+           </Link>
            <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 pointer-events-auto">
              <ThemeToggle />
            </div>

@@ -135,7 +135,7 @@ export default function MapContainerFullscreen({
             <MapSearchControl 
               onSelect={onSearchSelect} 
               externalQuery={searchQuery}
-              className="absolute top-4 right-16 z-[2000]"
+              className="absolute top-4 z-[25] left-16 right-16 md:left-auto md:right-16 md:w-[300px]"
             />
           )}
 

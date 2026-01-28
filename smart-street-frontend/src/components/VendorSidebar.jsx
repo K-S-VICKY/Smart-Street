@@ -29,26 +29,41 @@ export default function VendorSidebar({
 
   return (
     <div
-      className={`absolute top-4 left-4 z-[2000] flex flex-col transition-all duration-300 ${
-        collapsed ? "w-12 h-12 bg-white/90 dark:bg-slate-900/90 shadow-md rounded-full overflow-hidden" : "w-[calc(100vw-2rem)] md:w-96 max-h-[80vh] md:max-h-[calc(100vh-2rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-xl rounded-xl border border-slate-200 dark:border-slate-800"
-      } ${className}`}
+      className={`fixed transition-all duration-300 shadow-xl border border-slate-200 dark:border-slate-800 z-[30]
+        ${collapsed 
+          ? "w-12 h-12 rounded-full overflow-hidden bg-white/90 dark:bg-slate-900/90 top-4 left-4 md:top-4 md:left-4" 
+          : "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-t-2xl md:rounded-xl flex flex-col"
+        }
+        ${!collapsed && `
+          bottom-0 left-0 right-0 w-full max-h-[50vh] 
+          md:top-4 md:left-4 md:bottom-auto md:right-auto md:w-[clamp(320px,30vw,400px)] md:max-h-[calc(100vh-2rem)]
+        `}
+        ${className}
+      `}
     >
       {/* Toggle Button */}
       <button
         type="button"
         onClick={() => setCollapsed(!collapsed)}
-        className={`absolute z-[1010] p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all ${
-           collapsed ? "inset-0 flex items-center justify-center w-full h-full border-none" : "right-2 top-2 w-8 h-8 flex items-center justify-center"
+        className={`absolute z-[31] p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all ${
+           collapsed 
+             ? "inset-0 flex items-center justify-center w-full h-full border-none" 
+             : "right-4 top-[-1.5rem] md:right-2 md:top-2 w-8 h-8 flex items-center justify-center transform hover:scale-105"
         }`}
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
-        {collapsed ? <ChevronRightIcon className="w-5 h-5" /> : <ChevronLeftIcon className="w-4 h-4" />}
+        {collapsed ? (
+            // Different icons based on screen size could be good, but keeping simple for now
+            <ChevronRightIcon className="w-5 h-5 md:rotate-0 -rotate-90" /> 
+          ) : (
+            <ChevronLeftIcon className="w-4 h-4 md:rotate-0 -rotate-90" />
+        )}
       </button>
 
       {!collapsed && (
         <div className="flex flex-col h-full overflow-hidden">
            {/* Tab Navigation */}
-           <div className="flex items-center border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-1">
+           <div className="flex items-center border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-1 shrink-0">
               <button
                 onClick={() => setActiveTab("new")}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-semibold rounded-lg transition-all ${
@@ -56,7 +71,8 @@ export default function VendorSidebar({
                 }`}
               >
                 <PlusCircleIcon className="w-4 h-4" />
-                {t('new', { defaultValue: 'New' })}
+                <span className="hidden sm:inline">{t('new', { defaultValue: 'New' })}</span>
+                <span className="sm:hidden">New</span>
               </button>
               <button
                 onClick={() => setActiveTab("history")}
@@ -65,7 +81,8 @@ export default function VendorSidebar({
                 }`}
               >
                 <ClockIcon className="w-4 h-4" />
-                {t('history', { defaultValue: 'History' })}
+                <span className="hidden sm:inline">{t('history', { defaultValue: 'History' })}</span>
+                <span className="sm:hidden">History</span>
               </button>
               <button
                 onClick={() => setActiveTab("permits")}
@@ -74,11 +91,12 @@ export default function VendorSidebar({
                 }`}
               >
                 <DocumentCheckIcon className="w-4 h-4" />
-                {t('permits', { defaultValue: 'Permits' })}
+                <span className="hidden sm:inline">{t('permits', { defaultValue: 'Permits' })}</span>
+                <span className="sm:hidden">Permits</span>
               </button>
            </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-5">
+          <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-safe">
             
             {/* --- TAB: NEW REQUEST --- */}
             {activeTab === "new" && (
