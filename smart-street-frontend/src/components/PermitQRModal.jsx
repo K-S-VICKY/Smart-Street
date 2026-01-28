@@ -10,25 +10,149 @@ export default function PermitQRModal({ isOpen, onClose, permit }) {
   if (!permit) return null;
 
   // Data to embed in the QR code
-  const qrData = JSON.stringify({
+  const qrData = permit.qr_payload || JSON.stringify({
     permit_id: permit.permit_id,
-    vendor_id: permit.vendor_id,
-    space_name: permit.Space?.space_name,
-    valid_until: permit.valid_to,
-    type: "SMART_STREET_PERMIT"
+    error: "MISSING_PAYLOAD"
   });
 
-  const downloadQR = () => {
-    const canvas = qrRef.current?.querySelector("canvas");
-    if (canvas) {
-      const pngUrl = canvas.toDataURL("image/png");
-      const downloadLink = document.createElement("a");
-      downloadLink.href = pngUrl;
-      downloadLink.download = `permit-${permit.permit_id}.png`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
+  const downloadCard = async () => {
+    const qrCanvas = qrRef.current?.querySelector("canvas");
+    if (!qrCanvas) return;
+
+    // Create a new canvas to draw the card
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    
+    // Card Dimensions
+    const width = 600;
+    const height = 900; // Portrait ID Card style
+    canvas.width = width;
+    canvas.height = height;
+
+    // Helper for rounded rect to ensure compatibility
+    const drawRoundedRect = (x, y, w, h, r) => {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    };
+
+    // 1. Background
+    // Gradient Background (Blue Theme)
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, "#ffffff");
+    gradient.addColorStop(1, "#eff6ff"); // blue-50
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Top Header Bar (Blue/Indigo)
+    const headerGradient = ctx.createLinearGradient(0, 0, width, 0);
+    headerGradient.addColorStop(0, "#2563eb"); // blue-600
+    headerGradient.addColorStop(1, "#4f46e5"); // indigo-600
+    ctx.fillStyle = headerGradient;
+    ctx.fillRect(0, 0, width, 140);
+
+    // 2. Header Text
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 36px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("SMART STREET", width / 2, 70);
+    
+    ctx.font = "500 20px sans-serif";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.fillText("OFFICIAL VENDOR PERMIT", width / 2, 110);
+
+    // 3. Draw QR Code
+    // White box container for QR
+    const qrBoxSize = 340;
+    const qrBoxX = (width - qrBoxSize) / 2;
+    const qrBoxY = 200;
+    
+    ctx.save();
+    ctx.shadowColor = "rgba(0, 0, 0, 0.15)";
+    ctx.shadowBlur = 25;
+    ctx.shadowOffsetY = 10;
+    ctx.fillStyle = "#ffffff";
+    
+    drawRoundedRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 20);
+    ctx.fill();
+    ctx.restore();
+
+    // Draw the actual QR
+    const qrPadding = 30;
+    ctx.drawImage(
+      qrCanvas, 
+      qrBoxX + qrPadding, 
+      qrBoxY + qrPadding, 
+      qrBoxSize - (qrPadding*2), 
+      qrBoxSize - (qrPadding*2)
+    );
+
+    // 4. Details
+    const startY = 600;
+    
+    ctx.fillStyle = "#1e293b"; // slate-800
+    ctx.textAlign = "center";
+    
+    // Status Badge
+    // Badge Background
+    ctx.fillStyle = "#dcfce7"; // green-100
+    drawRoundedRect((width - 180)/2, startY - 20, 180, 40, 20);
+    ctx.fill();
+    
+    ctx.fillStyle = "#166534"; // green-800
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillText("ACTIVE PERMIT", width / 2, startY + 6);
+
+    // Permit ID
+    ctx.fillStyle = "#64748b"; // slate-500
+    ctx.font = "14px sans-serif";
+    ctx.fillText("PERMIT ID", width / 2, startY + 70);
+    
+    ctx.fillStyle = "#0f172a"; // slate-900
+    ctx.font = "bold 24px monospace";
+    ctx.fillText(`#${permit.permit_id.substring(0, 8)}...`, width / 2, startY + 100);
+
+    // Location (Only if populated)
+    let currentY = startY + 150;
+    if (permit.Space && permit.Space.space_name) {
+        ctx.fillStyle = "#64748b";
+        ctx.font = "14px sans-serif";
+        ctx.fillText("ASSIGNED LOCATION", width / 2, currentY);
+        
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 20px sans-serif";
+        ctx.fillText(permit.Space.space_name, width / 2, currentY + 30);
+        currentY += 80;
     }
+
+    // Validity
+    ctx.fillStyle = "#64748b";
+    ctx.font = "16px sans-serif";
+    const validFrom = new Date(permit.valid_from).toLocaleDateString();
+    const validTo = new Date(permit.valid_to).toLocaleDateString();
+    ctx.fillText(`Valid: ${validFrom} - ${validTo}`, width / 2, currentY + 30); // Adjusted Y
+
+    // Footer
+    ctx.fillStyle = "#f8fafc"; // slate-50
+    ctx.fillRect(0, height - 60, width, 60);
+    
+    ctx.fillStyle = "#94a3b8"; // slate-400
+    ctx.font = "12px sans-serif";
+    ctx.fillText("Scan to verify authenticity • Smart Street Platform", width / 2, height - 25);
+
+    // Download
+    const link = document.createElement('a');
+    link.download = `SmartStreet-Permit-${permit.permit_id.substring(0,8)}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
   };
 
   return (
@@ -43,94 +167,85 @@ export default function PermitQRModal({ isOpen, onClose, permit }) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/50" />
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="flex min-h-full items-center justify-center p-4">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
+              enterFrom="opacity-0 scale-95 translate-y-4"
+              enterTo="opacity-100 scale-100 translate-y-0"
               leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
+              leaveFrom="opacity-100 scale-100 translate-y-0"
+              leaveTo="opacity-0 scale-95 translate-y-4"
             >
-              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white dark:bg-slate-900 p-6 text-left align-middle shadow-xl transition-all border border-slate-200 dark:border-slate-800">
-                <div className="flex justify-between items-start mb-6">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-bold leading-6 text-slate-900 dark:text-white"
-                  >
-                    Permit Details
-                  </Dialog.Title>
-                  <button
-                    onClick={onClose}
-                    className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    <XMarkIcon className="w-6 h-6 text-slate-500" />
-                  </button>
+              <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl transition-all border border-slate-200 dark:border-slate-800">
+                
+                {/* Visual Card Representation - Blue Theme */}
+                <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 p-6 pb-20 text-center overflow-hidden">
+                   {/* Decorative Circles */}
+                   <div className="absolute top-[-50px] left-[-50px] w-40 h-40 bg-white opacity-10 rounded-full blur-2xl"></div>
+                   <div className="absolute top-[20px] right-[-20px] w-20 h-20 bg-purple-500 opacity-20 rounded-full blur-xl"></div>
+                   
+                   <h3 className="text-xl font-bold text-white tracking-widest uppercase mb-1 drop-shadow-sm">Smart Street</h3>
+                   <p className="text-blue-100 text-xs font-medium tracking-wider uppercase">Official Vendor Permit</p>
+                   
+                   <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-colors">
+                      <XMarkIcon className="w-5 h-5" />
+                   </button>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-8">
-                  {/* Left: QR Code */}
-                  <div className="flex flex-col items-center space-y-4">
-                    <div 
-                      ref={qrRef}
-                      className="p-3 bg-white rounded-xl shadow-sm border border-slate-200"
-                    >
-                      <QRCodeCanvas
-                        value={qrData}
-                        size={180}
-                        level={"H"}
-                        includeMargin={true}
-                      />
-                    </div>
-                    <button
-                      onClick={downloadQR}
-                      className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold transition-colors"
-                    >
-                      <ArrowDownTrayIcon className="w-4 h-4" />
-                      Save QR
-                    </button>
-                  </div>
+                <div className="relative px-6 pb-8 -mt-16">
+                   {/* QR Code Card */}
+                   <div className="bg-white p-4 rounded-2xl shadow-xl border border-slate-100 mb-6 flex justify-center">
+                      <div ref={qrRef}>
+                        <QRCodeCanvas
+                           value={qrData}
+                           size={200}
+                           level={"H"}
+                           includeMargin={true}
+                        />
+                      </div>
+                   </div>
 
-                  {/* Right: Text Details */}
-                  <div className="flex-1 space-y-4 text-sm">
-                     <div>
-                        <p className="text-xs text-slate-500 uppercase tracking-wide">Permit ID</p>
-                        <p className="font-mono font-bold text-slate-900 dark:text-white">#{permit.permit_id}</p>
-                     </div>
+                   {/* Details */}
+                   <div className="text-center space-y-4">
+                      
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-bold uppercase tracking-wide">
+                         <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                         Active Permit
+                      </div>
 
-                     <div>
-                        <p className="text-xs text-slate-500 uppercase tracking-wide">Location</p>
-                        <p className="font-semibold text-slate-900 dark:text-white">{permit.Space?.space_name || "Assigned Location"}</p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">{permit.Space?.address}</p>
-                     </div>
-
-                     <div className="grid grid-cols-2 gap-4">
+                      {permit.Space?.space_name && (
                         <div>
-                           <p className="text-xs text-slate-500 uppercase tracking-wide">Valid From</p>
-                           <p className="text-slate-800 dark:text-slate-200">{new Date(permit.valid_from).toLocaleDateString()}</p>
+                           <h4 className="text-slate-900 dark:text-white font-bold text-xl">{permit.Space.space_name}</h4>
+                           <p className="text-slate-500 text-sm">{permit.Space.address}</p>
                         </div>
-                        <div>
-                           <p className="text-xs text-slate-500 uppercase tracking-wide">Expires</p>
-                           <p className="text-slate-800 dark:text-slate-200">{new Date(permit.valid_to).toLocaleDateString()}</p>
-                        </div>
-                     </div>
-                     
-                     <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800/50">
-                        <div className="flex items-center gap-2">
-                           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                           <p className="text-xs font-bold text-green-700 dark:text-green-400 uppercase">Active Permit</p>
-                        </div>
-                        <p className="text-[10px] text-green-600 dark:text-green-500 mt-1 leading-relaxed">
-                           Authorized for use. Present QR to enforcement officers upon request.
-                        </p>
-                     </div>
-                  </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2 border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
+                         <div className="text-center">
+                            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Permit ID</p>
+                            <p className="font-mono font-bold text-slate-700 dark:text-slate-300 text-sm">#{permit.permit_id.substring(0,6)}</p>
+                         </div>
+                         <div className="text-center">
+                            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Valid Until</p>
+                            <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">{new Date(permit.valid_to).toLocaleDateString()}</p>
+                         </div>
+                      </div>
+
+                      <button
+                        onClick={downloadCard}
+                        className="w-full mt-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                      >
+                         <ArrowDownTrayIcon className="w-5 h-5" />
+                         Download Permit Card
+                      </button>
+                   </div>
                 </div>
+
               </Dialog.Panel>
             </Transition.Child>
           </div>

@@ -73,7 +73,7 @@ export default function MapSearchControl({
   };
 
   return (
-    <div className={`z-[1200] w-[260px] md:w-[300px] ${className}`}>
+    <div className={`z-[25] ${className.includes('w-') ? '' : 'w-[260px] md:w-[300px]'} ${className}`}>
       <form
         onSubmit={handleSubmit}
         className="flex items-center gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur rounded-lg shadow border border-slate-200 dark:border-slate-800 px-3 py-2" // Keep inner styling
