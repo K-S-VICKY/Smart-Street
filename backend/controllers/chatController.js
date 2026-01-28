@@ -1,5 +1,5 @@
 const aiService = require('../services/aiService');
-const db = require('../db');
+const db = require('../config/db');
 
 exports.handleChat = async (req, res) => {
   const { message } = req.body;
