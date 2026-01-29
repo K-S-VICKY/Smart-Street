@@ -43,13 +43,16 @@ jobs:
     needs: test
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+
+    env:
+      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
     steps:
       - name: Trigger Render Deploy
-        if: secrets.RENDER_DEPLOY_HOOK_URL != ''
+        if: env.RENDER_DEPLOY_HOOK_URL != ''
         run: |
-          curl -X GET "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
-        shell: bash
-      
+          curl -X GET "$RENDER_DEPLOY_HOOK_URL"
+
       - name: Deploy skipped warning
-        if: secrets.RENDER_DEPLOY_HOOK_URL == ''
+        if: env.RENDER_DEPLOY_HOOK_URL == ''
         run: echo "⚠️ RENDER_DEPLOY_HOOK_URL secret is missing. Skipping deployment trigger."
