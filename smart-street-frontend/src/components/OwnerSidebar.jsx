@@ -1,6 +1,17 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronRightIcon, ChevronLeftIcon, PlusCircleIcon, ListBulletIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronRightIcon,
+  ChevronLeftIcon,
+  PlusCircleIcon,
+  ListBulletIcon,
+  InboxArrowDownIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon
+} from "@heroicons/react/24/outline";
+import api from "../services/api";
+import { STATUS_COLORS, STATUS_LABELS } from "../utils/constants";
 
 export default function OwnerSidebar({
   spaces,
@@ -12,11 +23,68 @@ export default function OwnerSidebar({
   setPin,
   handleSubmit,
   saving,
+  requests = [],
+  requestsLoading = false,
+  onRequestAction,
+  activeTab: controlledActiveTab,
+  onTabChange,
+  highlightRequestId,
   className = ""
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState("list"); // "list", "create"
+  const [localActiveTab, setLocalActiveTab] = useState("list"); // "list", "create", "requests"
+
+  const activeTab = controlledActiveTab !== undefined ? controlledActiveTab : localActiveTab;
+  const setActiveTab = (tab) => {
+    if (onTabChange) onTabChange(tab);
+    else setLocalActiveTab(tab);
+  };
+  const [actionLoading, setActionLoading] = useState({});
   const { t } = useTranslation();
+
+  const pendingCount = requests.filter(r => r.status === "OWNER_PENDING").length;
+
+  // Scroll to highlighted request
+  React.useEffect(() => {
+    if (highlightRequestId && activeTab === "requests") {
+      const el = document.getElementById(`request-${highlightRequestId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [highlightRequestId, activeTab, requests]);
+
+  const handleApprove = async (requestId) => {
+    setActionLoading(prev => ({ ...prev, [requestId]: "approving" }));
+    try {
+      await api.post(`/owner/requests/${requestId}/approve`);
+      if (onRequestAction) onRequestAction();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to approve request");
+    } finally {
+      setActionLoading(prev => ({ ...prev, [requestId]: null }));
+    }
+  };
+
+  const handleReject = async (requestId) => {
+    const remarks = prompt("Enter rejection reason (optional):");
+    setActionLoading(prev => ({ ...prev, [requestId]: "rejecting" }));
+    try {
+      await api.post(`/owner/requests/${requestId}/reject`, { remarks });
+      if (onRequestAction) onRequestAction();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to reject request");
+    } finally {
+      setActionLoading(prev => ({ ...prev, [requestId]: null }));
+    }
+  };
+
+  const formatTime = (time) => {
+    if (!time) return "";
+    return new Date(time).toLocaleString(undefined, {
+      month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+    });
+  };
 
   return (
     <div
@@ -61,6 +129,20 @@ export default function OwnerSidebar({
               <ListBulletIcon className="w-6 h-6" />
               <span className="hidden sm:inline">{t("my_spaces")}</span>
               <span className="sm:hidden">{t("spaces")}</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("requests")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-lg font-semibold rounded-lg transition-all relative ${activeTab === "requests" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200 dark:border-slate-700" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                }`}
+            >
+              <InboxArrowDownIcon className="w-6 h-6" />
+              <span className="hidden sm:inline">{t("requests") || "Requests"}</span>
+              <span className="sm:hidden">{t("requests") || "Requests"}</span>
+              {pendingCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {pendingCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab("create")}
@@ -128,6 +210,112 @@ export default function OwnerSidebar({
                 {spaces.length > 0 && (
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-2.5 rounded text-xs text-blue-700 dark:text-blue-300 font-medium flex items-center gap-2">
                     <span>💡</span> {t("tip_click_space")}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* --- TAB: REQUESTS --- */}
+            {activeTab === "requests" && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-1">
+                      Vendor Requests
+                    </h2>
+                    <p className="text-base text-slate-500 dark:text-slate-400">
+                      Requests for your spaces
+                    </p>
+                  </div>
+                  <button
+                    onClick={onRequestAction}
+                    disabled={requestsLoading}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                  >
+                    {t("refresh")}
+                  </button>
+                </div>
+
+                {requestsLoading ? (
+                  <p className="text-sm text-slate-400 italic">{t("loading_text")}</p>
+                ) : requests.length === 0 ? (
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-lg text-center">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">No vendor requests yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {requests.map(req => {
+                      const isPending = req.status === "OWNER_PENDING";
+                      const loading = actionLoading[req.request_id];
+                      const statusColor = STATUS_COLORS[req.status] || "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200";
+                      const statusLabel = STATUS_LABELS[req.status] || req.status;
+
+                      return (
+                        <div
+                          key={req.request_id}
+                          id={`request-${req.request_id}`}
+                          className={`p-4 bg-white dark:bg-slate-800/30 border rounded-lg transition-all duration-500 ${highlightRequestId === req.request_id
+                            ? "ring-2 ring-blue-500 shadow-lg scale-[1.02] bg-blue-50/50 dark:bg-blue-900/20"
+                            : ""
+                            } ${isPending
+                              ? "border-orange-300 dark:border-orange-700 bg-orange-50/50 dark:bg-orange-900/10"
+                              : "border-slate-200 dark:border-slate-700"
+                            }`}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-base text-slate-800 dark:text-slate-200 truncate">
+                                {req.business_name || req.vendor_name || "Vendor"}
+                              </p>
+                              <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {req.space_name || "Custom Location"}
+                              </p>
+                            </div>
+                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColor}`}>
+                              {statusLabel}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-2">
+                            <span className="flex items-center gap-1">
+                              <ClockIcon className="w-3.5 h-3.5" />
+                              {formatTime(req.start_time)} — {formatTime(req.end_time)}
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-slate-400 dark:text-slate-500 mb-2">
+                            Area: {req.max_width}m × {req.max_length}m
+                          </div>
+
+                          {isPending && (
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                              <button
+                                onClick={() => handleApprove(req.request_id)}
+                                disabled={!!loading}
+                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                              >
+                                <CheckCircleIcon className="h-4 w-4" />
+                                {loading === "approving" ? "Approving..." : "Approve"}
+                              </button>
+                              <button
+                                onClick={() => handleReject(req.request_id)}
+                                disabled={!!loading}
+                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                              >
+                                <XCircleIcon className="h-4 w-4" />
+                                {loading === "rejecting" ? "Rejecting..." : "Reject"}
+                              </button>
+                            </div>
+                          )}
+
+                          {req.status === "OWNER_REJECTED" && req.remarks && (
+                            <p className="text-xs text-rose-500 dark:text-rose-400 mt-2 italic">
+                              Reason: {req.remarks}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

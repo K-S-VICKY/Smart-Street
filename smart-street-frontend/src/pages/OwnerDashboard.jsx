@@ -26,12 +26,14 @@ const MapClickCatcher = ({ onClick }) => {
 };
 
 export default function OwnerDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, fetchNotifications } = useAuth();
   const { success: showSuccess, error: showError } = useToast();
   const { t } = useTranslation();
   const [spaces, setSpaces] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [requests, setRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
   const [form, setForm] = useState({
     spaceName: "",
     address: "",
@@ -39,6 +41,8 @@ export default function OwnerDashboard() {
   });
   const [pin, setPin] = useState(null); // [lat, lng]
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState("list");
+  const [highlightRequestId, setHighlightRequestId] = useState(null);
 
   const fetchSpaces = async () => {
     setLoading(true);
@@ -52,8 +56,26 @@ export default function OwnerDashboard() {
     }
   };
 
+  const fetchRequests = async () => {
+    setRequestsLoading(true);
+    try {
+      const { data } = await api.get("/owner/requests");
+      setRequests(data.requests || []);
+    } catch (err) {
+      console.error("Failed to load owner requests:", err);
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchSpaces();
+    fetchRequests();
+    fetchNotifications();
+
+    // Poll notifications
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -137,6 +159,12 @@ export default function OwnerDashboard() {
               setPin={setPin}
               handleSubmit={handleSubmit}
               saving={saving}
+              requests={requests}
+              requestsLoading={requestsLoading}
+              onRequestAction={fetchRequests}
+              activeTab={sidebarTab}
+              onTabChange={setSidebarTab}
+              highlightRequestId={highlightRequestId}
             />
           }
         >
@@ -172,6 +200,17 @@ export default function OwnerDashboard() {
       <NotificationModal
         isOpen={showNotificationModal}
         onClose={() => setShowNotificationModal(false)}
+        onNotificationClick={(notification) => {
+          if (notification.related_request_id) {
+            setSidebarTab("requests");
+            setHighlightRequestId(notification.related_request_id);
+            setShowNotificationModal(false);
+            // Clear highlight after 3 seconds
+            setTimeout(() => setHighlightRequestId(null), 3000);
+          } else {
+            setShowNotificationModal(false);
+          }
+        }}
       />
     </div>
   );

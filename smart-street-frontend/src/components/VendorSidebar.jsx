@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ChevronRightIcon, ChevronLeftIcon, PlusCircleIcon, ClockIcon, DocumentCheckIcon, ArrowRightIcon, QrCodeIcon, ChartBarIcon } from "@heroicons/react/24/outline";
 import AnalyticsChart from "./AnalyticsChart";
 import { useTranslation } from "react-i18next";
-import { STATUS_COLORS } from "../utils/constants";
+import { STATUS_COLORS, STATUS_LABELS } from "../utils/constants";
 import SearchableSelect from "./SearchableSelect";
 
 export default function VendorSidebar({
@@ -196,7 +196,7 @@ export default function VendorSidebar({
                           <span className="font-bold text-lg text-slate-700 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">#{r.request_id.slice(0, 6)}</span>
                           <div className="flex items-center gap-2">
                             <span className={`px-2.5 py-1 rounded text-xs font-bold ${STATUS_COLORS[r.status] || STATUS_COLORS.PENDING
-                              }`}>{r.status}</span>
+                              }`}>{STATUS_LABELS[r.status] || r.status}</span>
                           </div>
                         </div>
                         <p className="text-slate-600 dark:text-slate-400 truncate text-base font-medium">{r.space_name || t('custom_location')}</p>

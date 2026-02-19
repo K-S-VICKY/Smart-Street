@@ -1,8 +1,20 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { motion } from "framer-motion";
-import { XMarkIcon, CheckCircleIcon, XCircleIcon, TicketIcon, BellIcon, InboxIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import {
+  XMarkIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  TicketIcon,
+  BellIcon,
+  InboxIcon,
+  MapPinIcon,
+  UserGroupIcon,
+  ShieldCheckIcon,
+  ShieldExclamationIcon
+} from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext.jsx";
+import api from "../services/api";
 
 const notificationIcons = {
   REQUEST_APPROVED: CheckCircleIcon,
@@ -10,18 +22,24 @@ const notificationIcons = {
   PERMIT_ISSUED: TicketIcon,
   PERMIT_REVOKED: XCircleIcon,
   NEW_VENDOR_REQUEST: InboxIcon,
-  NEW_OWNER_SPACE: MapPinIcon
+  NEW_OWNER_SPACE: MapPinIcon,
+  OWNER_SPACE_REQUEST: UserGroupIcon,
+  OWNER_APPROVAL_GRANTED: ShieldCheckIcon,
+  OWNER_APPROVAL_REJECTED: ShieldExclamationIcon
 };
 
 import { NOTIFICATION_STYLES } from "../utils/constants.js";
 
-export default function NotificationModal({ isOpen, onClose }) {
+export default function NotificationModal({ isOpen, onClose, onNotificationClick }) {
   const {
     notifications,
     unreadCount,
     markNotificationAsRead,
-    markAllNotificationsAsRead
+    markAllNotificationsAsRead,
+    fetchNotifications
   } = useAuth();
+
+  const [actionLoading, setActionLoading] = useState({});
 
   const handleMarkAsRead = async (notificationId) => {
     await markNotificationAsRead(notificationId);
@@ -29,6 +47,39 @@ export default function NotificationModal({ isOpen, onClose }) {
 
   const handleMarkAllAsRead = async () => {
     await markAllNotificationsAsRead();
+  };
+
+  const handleOwnerApprove = async (notification) => {
+    const requestId = notification.related_request_id;
+    if (!requestId) return;
+    setActionLoading(prev => ({ ...prev, [notification.notification_id]: "approving" }));
+    try {
+      await api.post(`/owner/requests/${requestId}/approve`);
+      await markNotificationAsRead(notification.notification_id);
+      await fetchNotifications();
+    } catch (err) {
+      console.error("Failed to approve:", err);
+      alert(err.response?.data?.message || "Failed to approve request");
+    } finally {
+      setActionLoading(prev => ({ ...prev, [notification.notification_id]: null }));
+    }
+  };
+
+  const handleOwnerReject = async (notification) => {
+    const requestId = notification.related_request_id;
+    if (!requestId) return;
+    const remarks = prompt("Enter rejection reason (optional):");
+    setActionLoading(prev => ({ ...prev, [notification.notification_id]: "rejecting" }));
+    try {
+      await api.post(`/owner/requests/${requestId}/reject`, { remarks });
+      await markNotificationAsRead(notification.notification_id);
+      await fetchNotifications();
+    } catch (err) {
+      console.error("Failed to reject:", err);
+      alert(err.response?.data?.message || "Failed to reject request");
+    } finally {
+      setActionLoading(prev => ({ ...prev, [notification.notification_id]: null }));
+    }
   };
 
   return (
@@ -97,11 +148,20 @@ export default function NotificationModal({ isOpen, onClose }) {
                     notifications.map((notification) => {
                       const Icon = notificationIcons[notification.type] || BellIcon;
                       const colorClass = NOTIFICATION_STYLES[notification.type] || "text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800";
+                      const isOwnerAction = notification.type === "OWNER_SPACE_REQUEST" && !notification.is_read;
+                      const loading = actionLoading[notification.notification_id];
 
                       return (
                         <div
                           key={notification.notification_id}
-                          className={`p-3 rounded-lg border ${notification.is_read ? "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800" : "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30"
+                          onClick={() => {
+                            if (notification.related_request_id && onNotificationClick) {
+                              markNotificationAsRead(notification.notification_id);
+                              onNotificationClick(notification);
+                              onClose();
+                            }
+                          }}
+                          className={`p-3 rounded-lg border ${notification.related_request_id && onNotificationClick ? "cursor-pointer hover:ring-2 hover:ring-blue-300 dark:hover:ring-blue-700 transition-all" : ""} ${notification.is_read ? "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800" : "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30"
                             }`}
                         >
                           <div className="flex items-start gap-3">
@@ -115,11 +175,34 @@ export default function NotificationModal({ isOpen, onClose }) {
                               <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
                                 {notification.message}
                               </p>
+
+                              {/* Owner action buttons for OWNER_SPACE_REQUEST */}
+                              {isOwnerAction && (
+                                <div className="flex items-center gap-2 mt-2 mb-2">
+                                  <button
+                                    onClick={() => handleOwnerApprove(notification)}
+                                    disabled={!!loading}
+                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                                  >
+                                    <CheckCircleIcon className="h-3.5 w-3.5" />
+                                    {loading === "approving" ? "Approving..." : "Approve"}
+                                  </button>
+                                  <button
+                                    onClick={() => handleOwnerReject(notification)}
+                                    disabled={!!loading}
+                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                                  >
+                                    <XCircleIcon className="h-3.5 w-3.5" />
+                                    {loading === "rejecting" ? "Rejecting..." : "Reject"}
+                                  </button>
+                                </div>
+                              )}
+
                               <p className="text-xs text-slate-500 dark:text-slate-500">
                                 {new Date(notification.created_at).toLocaleString()}
                               </p>
                             </div>
-                            {!notification.is_read && (
+                            {!notification.is_read && !isOwnerAction && (
                               <button
                                 onClick={() => handleMarkAsRead(notification.notification_id)}
                                 className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"

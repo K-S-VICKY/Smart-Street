@@ -65,7 +65,7 @@ export default function VendorRequestForm({
             disabled={
               saving ||
               !intent ||
-              !selectedSpaceId ||
+              (intent === "OWNER_DEFINED" && !selectedSpaceId) ||
               (intent === "REQUEST_NEW" && !pin) ||
               (intent === "REQUEST_NEW" && (!requestedRadius || requestedRadius <= 0))
             }

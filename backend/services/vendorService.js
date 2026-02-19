@@ -4,6 +4,7 @@ const spaceRepository = require("../repositories/spaceRepository");
 const requestRepository = require("../repositories/requestRepository");
 const notificationService = require("../services/notificationService");
 const adminRepository = require("../repositories/adminRepository");
+const ownerRepository = require("../repositories/ownerRepository");
 const { pointFromLatLng, radiusFromDims } = require("../services/spatialService");
 
 const ensureVendorExists = async userId => {
@@ -109,13 +110,21 @@ const submitRequest = async (userId, payload) => {
     throw err;
   }
 
+  // Check if space has an owner (for routing the approval)
+  let space = null;
   if (spaceId) {
-    const space = await validateRequestLocation({ spaceId, lat, lng, maxWidth, maxLength });
-    // Check conflicts only if attached to a space (or we could check global conflicts later)
-    await checkConflicts({ spaceId, lat, lng, maxWidth, maxLength, startTime, endTime });
+    space = await spaceRepository.findById(spaceId);
+    if (space) {
+      await validateRequestLocation({ spaceId, lat, lng, maxWidth, maxLength });
+      await checkConflicts({ spaceId, lat, lng, maxWidth, maxLength, startTime, endTime });
+    }
   }
 
-  const request = await requestRepository.createRequest({
+  // Determine initial status: if space has an owner, it needs owner approval first
+  const hasOwner = space && space.owner_id;
+  const initialStatus = hasOwner ? 'OWNER_PENDING' : 'PENDING';
+
+  const request = await requestRepository.createRequestWithStatus({
     vendorId: vendor.vendor_id,
     spaceId,
     lat: Number(lat),
@@ -123,19 +132,34 @@ const submitRequest = async (userId, payload) => {
     maxWidth: Number(maxWidth),
     maxLength: Number(maxLength),
     startTime,
-    endTime
+    endTime,
+    status: initialStatus
   });
 
-  // Notify all admin users about the new request
+  // Route notifications appropriately
   try {
-    const adminUserIds = await adminRepository.getAdminUserIds();
-    await Promise.all(
-      adminUserIds.map(adminId =>
-        notificationService.createNewVendorRequestNotification(adminId, request.request_id, vendor.business_name || "Unknown")
-      )
-    );
+    if (hasOwner) {
+      // Notify the space owner
+      const ownerUserId = await ownerRepository.getOwnerUserIdBySpaceId(spaceId);
+      if (ownerUserId) {
+        await notificationService.createOwnerSpaceRequestNotification(
+          ownerUserId,
+          request.request_id,
+          vendor.business_name || "Unknown",
+          space.space_name || "Unnamed"
+        );
+      }
+    } else {
+      // Notify all admin users (standalone request)
+      const adminUserIds = await adminRepository.getAdminUserIds();
+      await Promise.all(
+        adminUserIds.map(adminId =>
+          notificationService.createNewVendorRequestNotification(adminId, request.request_id, vendor.business_name || "Unknown")
+        )
+      );
+    }
   } catch (notifErr) {
-    console.error("Failed to send admin notifications:", notifErr);
+    console.error("Failed to send notifications:", notifErr);
   }
 
   return request;

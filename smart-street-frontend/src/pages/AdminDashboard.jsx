@@ -458,6 +458,13 @@ export default function AdminDashboard() {
         <NotificationModal
           isOpen={showNotificationModal}
           onClose={() => setShowNotificationModal(false)}
+          onNotificationClick={(notification) => {
+            if (notification.related_request_id) {
+              setActiveTab("map");
+              setSelectedId(notification.related_request_id);
+              setShowNotificationModal(false);
+            }
+          }}
         />
         <ConfirmModal
           isOpen={showRejectModal}

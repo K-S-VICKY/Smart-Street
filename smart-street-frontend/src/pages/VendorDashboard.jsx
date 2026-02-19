@@ -596,6 +596,13 @@ export default function VendorDashboard() {
       <NotificationModal
         isOpen={showNotificationModal}
         onClose={() => setShowNotificationModal(false)}
+        onNotificationClick={(notification) => {
+          if (notification.related_request_id) {
+            const req = requests.find(r => String(r.request_id) === String(notification.related_request_id));
+            if (req) setSelectedRequest(req);
+            setShowNotificationModal(false);
+          }
+        }}
       />
 
       {/* Permit QR/Detail Modal */}
