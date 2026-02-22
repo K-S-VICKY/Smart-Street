@@ -41,10 +41,66 @@ const createPermitRevokedNotification = async (vendorId, permitId) => {
   });
 };
 
+const createNewVendorRequestNotification = async (adminUserId, requestId, vendorName) => {
+  return await notificationRepository.createNotification({
+    userId: adminUserId,
+    type: "NEW_VENDOR_REQUEST",
+    title: "New Vendor Request",
+    message: `Vendor "${vendorName}" has submitted a new space request.`,
+    relatedRequestId: requestId
+  });
+};
+
+const createNewOwnerSpaceNotification = async (adminUserId, spaceName, ownerName) => {
+  return await notificationRepository.createNotification({
+    userId: adminUserId,
+    type: "NEW_OWNER_SPACE",
+    title: "New Owner Location",
+    message: `Owner "${ownerName}" has registered a new space "${spaceName}".`
+  });
+};
+
+const createOwnerSpaceRequestNotification = async (ownerUserId, requestId, vendorName, spaceName) => {
+  return await notificationRepository.createNotification({
+    userId: ownerUserId,
+    type: "OWNER_SPACE_REQUEST",
+    title: "Vendor Space Request",
+    message: `Vendor "${vendorName}" has requested to use your space "${spaceName}". Please review and approve or reject.`,
+    relatedRequestId: requestId
+  });
+};
+
+const createOwnerApprovalGrantedNotification = async (vendorUserId, requestId, spaceName) => {
+  return await notificationRepository.createNotification({
+    userId: vendorUserId,
+    type: "OWNER_APPROVAL_GRANTED",
+    title: "Owner Approved Your Request",
+    message: `The owner of space "${spaceName}" has approved your request. It is now pending admin review.`,
+    relatedRequestId: requestId
+  });
+};
+
+const createOwnerApprovalRejectedNotification = async (vendorUserId, requestId, spaceName, remarks) => {
+  return await notificationRepository.createNotification({
+    userId: vendorUserId,
+    type: "OWNER_APPROVAL_REJECTED",
+    title: "Owner Rejected Your Request",
+    message: remarks
+      ? `The owner of space "${spaceName}" rejected your request: ${remarks}`
+      : `The owner of space "${spaceName}" has rejected your request.`,
+    relatedRequestId: requestId
+  });
+};
+
 module.exports = {
   createRequestApprovedNotification,
   createRequestRejectedNotification,
   createPermitIssuedNotification,
   createPermitRevokedNotification,
+  createNewVendorRequestNotification,
+  createNewOwnerSpaceNotification,
+  createOwnerSpaceRequestNotification,
+  createOwnerApprovalGrantedNotification,
+  createOwnerApprovalRejectedNotification,
   repository: notificationRepository
 };

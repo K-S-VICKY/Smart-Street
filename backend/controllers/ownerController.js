@@ -28,8 +28,28 @@ const listRequests = async (req, res, next) => {
   }
 };
 
+const approveRequest = async (req, res, next) => {
+  try {
+    const result = await ownerService.approveRequest(req.user.userId, req.params.id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const rejectRequest = async (req, res, next) => {
+  try {
+    const result = await ownerService.rejectRequest(req.user.userId, req.params.id, req.body.remarks);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createSpace,
   listSpaces,
-  listRequests
+  listRequests,
+  approveRequest,
+  rejectRequest
 };

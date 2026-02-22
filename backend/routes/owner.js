@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { body } = require("express-validator");
+const { body, param } = require("express-validator");
 const ownerController = require("../controllers/ownerController");
 const { authenticate, requireRoles } = require("../middleware/authMiddleware");
 const validateRequest = require("../middleware/validateRequest");
@@ -21,5 +21,24 @@ router.post(
 
 router.get("/spaces", ownerController.listSpaces);
 router.get("/requests", ownerController.listRequests);
+
+router.post(
+  "/requests/:id/approve",
+  [
+    param("id").isUUID().withMessage("valid request id is required")
+  ],
+  validateRequest,
+  ownerController.approveRequest
+);
+
+router.post(
+  "/requests/:id/reject",
+  [
+    param("id").isUUID().withMessage("valid request id is required"),
+    body("remarks").optional().isString().isLength({ max: 2000 })
+  ],
+  validateRequest,
+  ownerController.rejectRequest
+);
 
 module.exports = router;

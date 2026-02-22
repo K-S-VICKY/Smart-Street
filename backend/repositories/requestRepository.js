@@ -1,6 +1,57 @@
 const db = require("../config/db");
 const { pointFromLatLng, radiusFromDims } = require("../services/spatialService");
 
+const getRequestById = async requestId => {
+  const result = await db.query(
+    `
+    SELECT
+      sr.request_id,
+      sr.vendor_id,
+      sr.space_id,
+      sr.max_width,
+      sr.max_length,
+      sr.start_time,
+      sr.end_time,
+      sr.status,
+      sr.reviewed_by,
+      sr.reviewed_at,
+      sr.remarks,
+      sr.submitted_at,
+      sr.owner_approved_by,
+      sr.owner_approved_at,
+      ST_Y(sr.center::geometry) AS lat,
+      ST_X(sr.center::geometry) AS lng,
+      s.space_name,
+      s.address,
+      s.owner_id,
+      v.business_name,
+      u.name AS vendor_name
+    FROM space_requests sr
+    LEFT JOIN spaces s ON s.space_id = sr.space_id
+    JOIN vendors v ON v.vendor_id = sr.vendor_id
+    JOIN users u ON u.user_id = v.user_id
+    WHERE sr.request_id = $1;
+    `,
+    [requestId]
+  );
+  return result.rows[0] || null;
+};
+
+const updateOwnerApproval = async ({ requestId, status, ownerUserId }) => {
+  const result = await db.query(
+    `
+    UPDATE space_requests
+    SET status = $2::request_status,
+        owner_approved_by = $3,
+        owner_approved_at = NOW()
+    WHERE request_id = $1
+    RETURNING *;
+    `,
+    [requestId, status, ownerUserId]
+  );
+  return result.rows[0];
+};
+
 const listOwnerRequests = async ownerId => {
   const result = await db.query(
     `
@@ -17,11 +68,17 @@ const listOwnerRequests = async ownerId => {
       sr.reviewed_at,
       sr.remarks,
       sr.submitted_at,
+      sr.owner_approved_by,
+      sr.owner_approved_at,
       ST_Y(sr.center::geometry) AS lat,
       ST_X(sr.center::geometry) AS lng,
-      s.space_name
+      s.space_name,
+      v.business_name,
+      u.name AS vendor_name
     FROM space_requests sr
     JOIN spaces s ON s.space_id = sr.space_id
+    JOIN vendors v ON v.vendor_id = sr.vendor_id
+    JOIN users u ON u.user_id = v.user_id
     WHERE s.owner_id = $1
     ORDER BY sr.submitted_at DESC;
     `,
@@ -81,9 +138,61 @@ const createRequest = async ({
   return result.rows[0];
 };
 
+const createRequestWithStatus = async ({
+  vendorId,
+  spaceId,
+  lat,
+  lng,
+  maxWidth,
+  maxLength,
+  startTime,
+  endTime,
+  status
+}) => {
+  const result = await db.query(
+    `
+    INSERT INTO space_requests (
+      vendor_id,
+      space_id,
+      center,
+      max_width,
+      max_length,
+      start_time,
+      end_time,
+      status
+    )
+    VALUES (
+      $1,
+      $2,
+      ${pointFromLatLng(lat, lng)},
+      $3,
+      $4,
+      $5::timestamptz,
+      $6::timestamptz,
+      $7::request_status
+    )
+    RETURNING
+      request_id,
+      vendor_id,
+      space_id,
+      max_width,
+      max_length,
+      start_time,
+      end_time,
+      status,
+      submitted_at,
+      ST_Y(center::geometry) AS lat,
+      ST_X(center::geometry) AS lng;
+    `,
+    [vendorId, spaceId, maxWidth, maxLength, startTime, endTime, status || 'PENDING']
+  );
+
+  return result.rows[0];
+};
+
 const checkSpatialTemporalConflicts = async ({ spaceId, lat, lng, maxWidth, maxLength, startTime, endTime }) => {
   const requestRadius = radiusFromDims(maxWidth, maxLength);
-  
+
   const result = await db.query(
     `
     WITH req_point AS (
@@ -138,6 +247,8 @@ const listVendorRequests = async vendorId => {
       sr.reviewed_at,
       sr.remarks,
       sr.submitted_at,
+      sr.owner_approved_by,
+      sr.owner_approved_at,
       ST_Y(sr.center::geometry) AS lat,
       ST_X(sr.center::geometry) AS lng,
       s.space_name,
@@ -187,7 +298,10 @@ const listVendorPermits = async vendorId => {
 module.exports = {
   listOwnerRequests,
   createRequest,
+  createRequestWithStatus,
   checkSpatialTemporalConflicts,
   listVendorRequests,
-  listVendorPermits
+  listVendorPermits,
+  getRequestById,
+  updateOwnerApproval
 };

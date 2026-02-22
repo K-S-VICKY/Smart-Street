@@ -15,8 +15,10 @@ import RequestDetailModal from "../components/RequestDetailModal.jsx";
 import VoiceAssistant from "../components/VoiceAssistant.jsx";
 import { parseBookingIntent } from "../utils/voiceUtils.js";
 import ThemeToggle from "../components/ThemeToggle.jsx";
+
 import AnalyticsChart from "../components/AnalyticsChart.jsx";
 import LanguageSwitcher from "../components/LanguageSwitcher.jsx";
+import UserDropdown from "../components/UserDropdown.jsx";
 import { useTranslation } from "react-i18next";
 
 const defaultCenter = [11.3410, 77.7172];
@@ -68,7 +70,7 @@ const MapZoomToSpace = ({ lat, lng, radius }) => {
         ];
         map.fitBounds(bounds, {
           padding: [8, 8],
-          maxZoom: 19,
+          maxZoom: 22,
           animate: true,
           duration: 1.0
         });
@@ -105,7 +107,7 @@ import { STATUS_COLORS } from "../utils/constants.js";
 
 export default function VendorDashboard() {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, fetchNotifications } = useAuth();
   const { success: showSuccess, error: showError } = useToast();
   const [spaces, setSpaces] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -340,6 +342,13 @@ export default function VendorDashboard() {
     fetchAnalytics();
   }, []);
 
+  // Poll notifications every 30s
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Reset state when intent changes (prevents the “pin always created” bug)
   useEffect(() => {
     setError(null);
@@ -432,27 +441,24 @@ export default function VendorDashboard() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      <header className="flex-none bg-white dark:bg-slate-900 shadow-sm border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+
+
+      <header className="flex-none bg-white dark:bg-slate-900 shadow-sm border-b border-slate-200 dark:border-slate-800 transition-colors duration-300 relative z-[3000]">
         <div className="relative px-4 md:px-6 py-4 md:py-5 flex flex-col md:flex-row items-center justify-center">
           <div className="text-center z-0">
             <Link to="/" className="block">
               <p className="text-sm md:text-base text-blue-700 dark:text-blue-400 font-semibold tracking-[0.2em] hover:opacity-80 transition-opacity">SMART STREET</p>
             </Link>
             <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">{t('vendor_workspace')}</h1>
-            <p className="text-sm md:text-base text-slate-600 dark:text-slate-400">Choose intent → select owner space → submit request</p>
+            <p className="text-sm md:text-base text-slate-600 dark:text-slate-400">{t('vendor_action_subtitle')}</p>
           </div>
           <div className="mt-4 md:mt-0 md:absolute md:right-6 flex items-center gap-2 md:gap-3 text-sm md:text-lg text-slate-700 dark:text-slate-300 w-full md:w-auto justify-center md:justify-end z-10">
             <LanguageSwitcher />
             <ThemeToggle />
+
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
             <NotificationBell onClick={() => setShowNotificationModal(true)} />
-            <span className="font-semibold truncate max-w-[100px] md:max-w-none">{user?.name}</span>
-            <button
-              onClick={logout}
-              className="rounded-lg bg-slate-800 dark:bg-slate-700 px-4 py-2 text-white hover:bg-slate-900 dark:hover:bg-slate-600 transition-colors whitespace-nowrap"
-            >
-              {t('logout')}
-            </button>
+            <UserDropdown />
           </div>
         </div>
       </header>
@@ -472,6 +478,7 @@ export default function VendorDashboard() {
             }
           }}
           searchQuery={mapSearchQuery}
+          searchPlaceholder={t('search_places')}
           isFullscreen={fullscreen}
           onToggleFullscreen={setFullscreen}
           showFullscreenButton={true}
@@ -589,6 +596,13 @@ export default function VendorDashboard() {
       <NotificationModal
         isOpen={showNotificationModal}
         onClose={() => setShowNotificationModal(false)}
+        onNotificationClick={(notification) => {
+          if (notification.related_request_id) {
+            const req = requests.find(r => String(r.request_id) === String(notification.related_request_id));
+            if (req) setSelectedRequest(req);
+            setShowNotificationModal(false);
+          }
+        }}
       />
 
       {/* Permit QR/Detail Modal */}
