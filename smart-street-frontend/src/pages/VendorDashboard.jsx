@@ -643,7 +643,10 @@ export default function VendorDashboard() {
                   position={[Number(space.lat), Number(space.lng)]}
                   icon={icon}
                   eventHandlers={{
-                    click: () => setSelectedSpaceId(space.space_id)
+                    click: () => {
+                      setSelectedSpaceId(space.space_id);
+                      setIntent("OWNER_DEFINED");
+                    }
                   }}
                 >
                   <Popup>
