@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { CheckCircleIcon, XCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { STATUS_COLORS, STATUS_LABELS } from "../../utils/constants";
 import api from "../../services/api";
+import LoadingSpinner from "../LoadingSpinner";
 
 export default function OwnerRequestsList({ requests, fetchRequests, loading, highlightRequestId }) {
     const [actionLoading, setActionLoading] = useState({});
@@ -41,7 +42,14 @@ export default function OwnerRequestsList({ requests, fetchRequests, loading, hi
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-slate-500">Loading requests...</div>;
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 gap-4">
+                <LoadingSpinner size="lg" color="black" />
+                <p className="text-slate-500 font-medium">Loading requests...</p>
+            </div>
+        );
+    }
 
     return (
         <div>

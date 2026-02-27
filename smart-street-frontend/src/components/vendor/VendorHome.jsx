@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
     TrophyIcon,
-    ClockIcon,
     CurrencyRupeeIcon,
     HeartIcon,
     ArrowPathIcon,
@@ -10,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import api from "../../services/api";
+import LoadingSpinner from "../LoadingSpinner";
 
 export default function VendorHome({ onSelectSpace, analytics, favorites, onToggleFavorite }) {
     const [loading, setLoading] = useState(!analytics);
@@ -18,18 +18,28 @@ export default function VendorHome({ onSelectSpace, analytics, favorites, onTogg
         if (analytics) setLoading(false);
     }, [analytics]);
 
+    const [requestLoadingId, setRequestLoadingId] = useState(null);
+
     const handleToggleFavorite = async (spaceId) => {
         if (onToggleFavorite) {
             onToggleFavorite(spaceId);
         }
     };
 
+    const handleReRequest = async (req) => {
+        setRequestLoadingId(req.request_id);
+        try {
+            await new Promise(resolve => setTimeout(resolve, 600)); // Allow spinner to show briefly
+            await onSelectSpace(req);
+        } finally {
+            setRequestLoadingId(null);
+        }
+    };
+
     if (loading) return (
-        <div className="p-8 space-y-8 animate-pulse">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[1, 2, 3].map(i => <div key={i} className="h-32 bg-slate-200 dark:bg-slate-800 rounded-3xl" />)}
-            </div>
-            <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-3xl" />
+        <div className="flex flex-col items-center justify-center min-h-[400px] p-8 space-y-4">
+            <LoadingSpinner size="xl" className="text-blue-600" />
+            <p className="text-slate-500 font-medium animate-pulse">Loading dashboard...</p>
         </div>
     );
 
@@ -43,13 +53,7 @@ export default function VendorHome({ onSelectSpace, analytics, favorites, onTogg
                     <h1 className="text-3xl font-black text-slate-900 dark:text-white">Vendor Central</h1>
                     <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your permits and optimize your street presence.</p>
                 </div>
-                <div className="bg-blue-600 text-white px-6 py-3 rounded-2xl shadow-lg shadow-blue-500/30 flex items-center gap-3">
-                    <ClockIcon className="w-6 h-6" />
-                    <div>
-                        <p className="text-[10px] uppercase font-bold opacity-80">Active Time Today</p>
-                        <p className="text-lg font-bold">4h 12m</p>
-                    </div>
-                </div>
+
             </div>
 
             {/* Stats Cards */}
@@ -98,10 +102,15 @@ export default function VendorHome({ onSelectSpace, analytics, favorites, onTogg
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => onSelectSpace(req)}
-                                            className="bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white p-2.5 rounded-xl transition-all group-hover:scale-105"
+                                            onClick={() => handleReRequest(req)}
+                                            disabled={requestLoadingId === req.request_id}
+                                            className="bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white p-2.5 rounded-xl transition-all group-hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            <ArrowPathIcon className="w-5 h-5" />
+                                            {requestLoadingId === req.request_id ? (
+                                                <div className="w-5 h-5 border-2 border-slate-400 dark:border-slate-500 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin" />
+                                            ) : (
+                                                <ArrowPathIcon className="w-5 h-5" />
+                                            )}
                                         </button>
                                     </div>
                                 ))}

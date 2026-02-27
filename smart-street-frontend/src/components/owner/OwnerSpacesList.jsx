@@ -1,12 +1,20 @@
 import React, { useState } from "react";
 import { PlusIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import LoadingSpinner from "../LoadingSpinner";
 
 import { useNavigate } from "react-router-dom";
 
 export default function OwnerSpacesList({ spaces, loading, onRefresh, onViewOnMap }) {
     const navigate = useNavigate();
 
-    if (loading) return <div className="p-10 text-center text-slate-500">Loading spaces...</div>;
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 gap-4">
+                <LoadingSpinner size="lg" color="black" />
+                <p className="text-slate-500 font-medium">Loading spaces...</p>
+            </div>
+        );
+    }
 
     return (
         <div>

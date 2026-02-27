@@ -5,15 +5,14 @@ import {
   ClockIcon
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function AdminStatsCards({ stats, loading }) {
   const { t } = useTranslation();
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-28 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
-        ))}
+      <div className="flex justify-center items-center h-28 mb-6">
+        <LoadingSpinner size="lg" color="black" />
       </div>
     );
   }

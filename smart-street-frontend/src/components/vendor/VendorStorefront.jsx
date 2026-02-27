@@ -8,6 +8,7 @@ import {
     ShoppingBagIcon
 } from "@heroicons/react/24/outline";
 import api from "../../services/api";
+import LoadingSpinner from "../LoadingSpinner";
 
 export default function VendorStorefront() {
     const [vendor, setVendor] = useState(null);
@@ -75,7 +76,12 @@ export default function VendorStorefront() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Loading storefront...</div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] p-8 space-y-4">
+            <LoadingSpinner size="xl" className="text-blue-600" />
+            <p className="text-slate-500 font-medium animate-pulse">Loading storefront...</p>
+        </div>
+    );
 
     return (
         <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-10 pb-20">

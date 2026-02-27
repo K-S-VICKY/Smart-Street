@@ -4,6 +4,7 @@ import AnalyticsChart from "./AnalyticsChart";
 import { useTranslation } from "react-i18next";
 import { STATUS_COLORS, STATUS_LABELS } from "../utils/constants";
 import SearchableSelect from "./SearchableSelect";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function VendorSidebar({
   intent,
@@ -140,7 +141,9 @@ export default function VendorSidebar({
                     <div className="space-y-2 animate-fadeIn">
                       <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">{t('select_space')}</h3>
                       {loading ? (
-                        <div className="text-xs text-slate-400 italic">{t('loading_spaces')}</div>
+                        <div className="flex justify-center p-4">
+                          <LoadingSpinner size="sm" className="text-blue-600" />
+                        </div>
                       ) : spaces.length === 0 ? (
                         <div className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-100 dark:border-red-900/30">
                           {t('no_spaces_available')}

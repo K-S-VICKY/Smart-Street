@@ -23,6 +23,7 @@ import UserDropdown from "../components/UserDropdown.jsx";
 import VendorHome from "../components/vendor/VendorHome.jsx";
 import VendorStorefront from "../components/vendor/VendorStorefront.jsx";
 import WeatherWidget from "../components/WeatherWidget.jsx";
+import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import {
   HomeIcon,
   MapIcon,
