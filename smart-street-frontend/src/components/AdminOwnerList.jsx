@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import AdminOwnerDetail from "./AdminOwnerDetail.jsx";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function AdminOwnerList({ owners, loading }) {
   const [search, setSearch] = useState("");
@@ -15,13 +16,9 @@ export default function AdminOwnerList({ owners, loading }) {
   ) || [];
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 animate-pulse">
-        <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-1/4 mb-6"></div>
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-16 bg-slate-100 dark:bg-slate-800/50 rounded-lg"></div>
-          ))}
-        </div>
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-20 flex flex-col items-center justify-center gap-4">
+        <LoadingSpinner size="lg" color="black" />
+        <p className="text-slate-500 font-medium">{t("loading_owners") || "Loading owners..."}</p>
       </div>
     );
   }

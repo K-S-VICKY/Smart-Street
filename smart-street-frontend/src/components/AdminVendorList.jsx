@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MagnifyingGlassIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import AdminVendorDetail from "./AdminVendorDetail.jsx";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function AdminVendorList({ vendors, loading }) {
   const [search, setSearch] = useState("");
@@ -16,15 +17,9 @@ export default function AdminVendorList({ vendors, loading }) {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-slate-100 dark:bg-slate-800 rounded w-1/3"></div>
-          <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-12 bg-slate-50 dark:bg-slate-800/50 rounded"></div>
-            ))}
-          </div>
-        </div>
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-20 shadow-sm flex flex-col items-center justify-center gap-4">
+        <LoadingSpinner size="lg" color="black" />
+        <p className="text-slate-500 font-medium">{t("loading_vendors") || "Loading vendors..."}</p>
       </div>
     );
   }

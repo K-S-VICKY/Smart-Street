@@ -12,6 +12,7 @@ import {
 } from "@heroicons/react/24/outline";
 import api from "../services/api";
 import { STATUS_COLORS, STATUS_LABELS } from "../utils/constants";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function OwnerSidebar({
   spaces,
@@ -171,7 +172,9 @@ export default function OwnerSidebar({
                 </div>
 
                 {loading ? (
-                  <p className="text-sm text-slate-400 italic">{t("loading_text")}</p>
+                  <div className="flex justify-center p-8">
+                    <LoadingSpinner size="md" color="black" />
+                  </div>
                 ) : spaces.length === 0 ? (
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-lg text-center">
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{t("no_spaces_created")}</p>
@@ -237,7 +240,9 @@ export default function OwnerSidebar({
                 </div>
 
                 {requestsLoading ? (
-                  <p className="text-sm text-slate-400 italic">{t("loading_text")}</p>
+                  <div className="flex justify-center p-8">
+                    <LoadingSpinner size="md" color="black" />
+                  </div>
                 ) : requests.length === 0 ? (
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-lg text-center">
                     <p className="text-sm text-slate-500 dark:text-slate-400">No vendor requests yet</p>

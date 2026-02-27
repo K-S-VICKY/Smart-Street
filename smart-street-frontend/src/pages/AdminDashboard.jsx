@@ -13,6 +13,7 @@ import NotificationModal from "../components/NotificationModal.jsx";
 import { ConfirmModal } from "../components/Modal.jsx";
 import MapSearchControl from "../components/MapSearchControl.jsx";
 import AdminSidebar from "../components/AdminSidebar.jsx";
+import LoadingSpinner from "../components/LoadingSpinner.jsx";
 
 
 import AdminRequestDetail from "../components/AdminRequestDetail.jsx";
@@ -433,8 +434,8 @@ export default function AdminDashboard() {
                     <div className="font-semibold text-center mt-1">
                       <span className="text-slate-500 text-xs uppercase tracking-wider block mb-1">Status</span>
                       <span className={`px-2 py-0.5 rounded-md text-sm font-bold ${selected.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                          selected.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                            'bg-yellow-100 text-yellow-700'
+                        selected.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                          'bg-yellow-100 text-yellow-700'
                         }`}>
                         {selected.status || 'PENDING'}
                       </span>
@@ -535,75 +536,23 @@ export default function AdminDashboard() {
           loading={actionLoading}
         />
 
-        {/* Full-screen Loading Overlay for Actions */}
         {actionLoading && (
           <div className="fixed inset-0 z-[10000] bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-300">
             <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
-              <svg className="h-12 w-12 text-slate-900 dark:text-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <style>
-                  {`
-                    .spinner-tick {
-                      animation: spinner-fade 1s linear infinite;
-                      stroke: currentColor;
-                      stroke-width: 2.5;
-                      stroke-linecap: round;
-                    }
-                    @keyframes spinner-fade {
-                      0% { opacity: 1; }
-                      100% { opacity: 0; }
-                    }
-                  `}
-                </style>
-                <g transform="translate(12, 12)">
-                  <line x1="0" y1="-9" x2="0" y2="-5" className="spinner-tick" style={{ animationDelay: '-1s' }} />
-                  <line x1="6.36" y1="-6.36" x2="3.54" y2="-3.54" className="spinner-tick" style={{ animationDelay: '-0.875s' }} />
-                  <line x1="9" y1="0" x2="5" y2="0" className="spinner-tick" style={{ animationDelay: '-0.75s' }} />
-                  <line x1="6.36" y1="6.36" x2="3.54" y2="3.54" className="spinner-tick" style={{ animationDelay: '-0.625s' }} />
-                  <line x1="0" y1="9" x2="0" y2="5" className="spinner-tick" style={{ animationDelay: '-0.5s' }} />
-                  <line x1="-6.36" y1="6.36" x2="-3.54" y2="3.54" className="spinner-tick" style={{ animationDelay: '-0.375s' }} />
-                  <line x1="-9" y1="0" x2="-5" y2="0" className="spinner-tick" style={{ animationDelay: '-0.25s' }} />
-                  <line x1="-6.36" y1="-6.36" x2="-3.54" y2="-3.54" className="spinner-tick" style={{ animationDelay: '-0.125s' }} />
-                </g>
-              </svg>
+              <LoadingSpinner size="lg" color="black" />
               <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
-                Loading... Please Wait...
+                {t("loading_wait") || "Loading... Please Wait..."}
               </p>
             </div>
           </div>
         )}
 
-        {/* Full-screen Loading Overlay for Routing */}
         {routingLoading && (
           <div className="fixed inset-0 z-[10000] bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-300">
             <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
-              <svg className="h-12 w-12 text-slate-900 dark:text-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <style>
-                  {`
-                    .spinner-tick-black {
-                      animation: spinner-fade-black 1s linear infinite;
-                      stroke: currentColor;
-                      stroke-width: 2.5;
-                      stroke-linecap: round;
-                    }
-                    @keyframes spinner-fade-black {
-                      0% { opacity: 1; }
-                      100% { opacity: 0; }
-                    }
-                  `}
-                </style>
-                <g transform="translate(12, 12)">
-                  <line x1="0" y1="-9" x2="0" y2="-5" className="spinner-tick-black" style={{ animationDelay: '-1s' }} />
-                  <line x1="6.36" y1="-6.36" x2="3.54" y2="-3.54" className="spinner-tick-black" style={{ animationDelay: '-0.875s' }} />
-                  <line x1="9" y1="0" x2="5" y2="0" className="spinner-tick-black" style={{ animationDelay: '-0.75s' }} />
-                  <line x1="6.36" y1="6.36" x2="3.54" y2="3.54" className="spinner-tick-black" style={{ animationDelay: '-0.625s' }} />
-                  <line x1="0" y1="9" x2="0" y2="5" className="spinner-tick-black" style={{ animationDelay: '-0.5s' }} />
-                  <line x1="-6.36" y1="6.36" x2="-3.54" y2="3.54" className="spinner-tick-black" style={{ animationDelay: '-0.375s' }} />
-                  <line x1="-9" y1="0" x2="-5" y2="0" className="spinner-tick-black" style={{ animationDelay: '-0.25s' }} />
-                  <line x1="-6.36" y1="-6.36" x2="-3.54" y2="-3.54" className="spinner-tick-black" style={{ animationDelay: '-0.125s' }} />
-                </g>
-              </svg>
+              <LoadingSpinner size="lg" color="black" />
               <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
-                Loading... Please Wait...
+                {t("loading_wait") || "Loading... Please Wait..."}
               </p>
             </div>
           </div>

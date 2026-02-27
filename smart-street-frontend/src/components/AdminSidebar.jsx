@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronRightIcon, ChevronLeftIcon, InboxIcon, ArchiveBoxIcon } from "@heroicons/react/24/outline";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function AdminSidebar({
   requests,
@@ -86,12 +87,18 @@ export default function AdminSidebar({
                 disabled={loading}
                 className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 disabled:opacity-50 font-semibold"
               >
-                {loading ? "..." : t("refresh")}
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <LoadingSpinner size="sm" color="black" />
+                  </div>
+                ) : t("refresh")}
               </button>
             </div>
 
             {loading ? (
-              <p className="text-xs text-slate-400 italic">{t("loading_requests")}</p>
+              <div className="flex justify-center p-8">
+                <LoadingSpinner size="md" color="black" />
+              </div>
             ) : requests.length === 0 ? (
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-lg text-center">
                 <p className="text-xs text-slate-500 dark:text-slate-400">{t("no_requests_found", { mode: viewMode })}</p>

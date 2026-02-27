@@ -15,6 +15,7 @@ import {
     ClockIcon,
     ChartBarIcon
 } from "@heroicons/react/24/outline";
+import LoadingSpinner from "../LoadingSpinner";
 
 export default function OwnerAnalytics({ spaces, requests, loading, onNavigate }) {
     const { t } = useTranslation();
@@ -70,7 +71,12 @@ export default function OwnerAnalytics({ spaces, requests, loading, onNavigate }
     }, [metrics.earnings]);
 
     if (loading) {
-        return <div className="p-10 text-center text-slate-500">Loading analytics...</div>;
+        return (
+            <div className="flex flex-col items-center justify-center p-20 gap-4">
+                <LoadingSpinner size="lg" color="black" />
+                <p className="text-slate-500 font-medium">Loading analytics...</p>
+            </div>
+        );
     }
 
     return (

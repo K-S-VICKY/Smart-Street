@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { XMarkIcon, UserIcon, HomeModernIcon, CurrencyRupeeIcon } from "@heroicons/react/24/outline";
 import api from "../services/api";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function AdminOwnerDetail({ ownerId, onClose }) {
     const { t } = useTranslation();
@@ -35,9 +36,9 @@ export default function AdminOwnerDetail({ ownerId, onClose }) {
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {loading ? (
-                    <div className="animate-pulse space-y-4">
-                        <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
-                        <div className="h-64 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                    <div className="flex flex-col items-center justify-center p-20 gap-4">
+                        <LoadingSpinner size="lg" color="black" />
+                        <p className="text-slate-500 font-medium">Loading owner details...</p>
                     </div>
                 ) : ownerData ? (
                     <>
